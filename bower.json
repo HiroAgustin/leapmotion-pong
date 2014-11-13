@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "dependencies": {
     "leapjs": "~0.6.2",
-    "leapjs-plugins": "~0.1.6"
+    "leapjs-plugins": "~0.1.6",
+    "jquery": "~2.1.1"
   }
 }

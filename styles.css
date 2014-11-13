@@ -1,0 +1,33 @@
+.board {
+  position: relative;
+}
+
+.ball {
+  background: #000;
+  border-radius: 50%;
+  height: 50px;
+  position: absolute;
+  width: 50px;
+}
+
+.bar {
+  background: #000;
+  height: 100px;
+  position: absolute;
+  width: 20px;
+}
+
+#left {
+  left: 0;
+  top: 20px;
+}
+
+
+#right {
+  right: 0;
+  top: 20px;
+}
+
+#ball {
+  display: none;
+}
