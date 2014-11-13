@@ -1,18 +1,21 @@
-;(function (doc)
+;(function (doc, $)
 {
   'use strict';
 
-  var $left = $('#left'),
-      $right = $('#right'),
-      $ball = $('#ball'),
-      SCALE = 1.6;
+  var SCALE = 1.6;
 
-  function unitVector(v) {
+  function unitVector (v)
+  {
     var mag = Math.sqrt( v.x * v.x + v.y * v.y );
-    return { x: v.x / mag, y: v.y / mag };
+
+    return {
+      x: v.x / mag,
+      y: v.y / mag
+    };
   }
 
-  function localToWorldCoords(pos) {
+  function localToWorldCoords (pos)
+  {
     return pos * SCALE - 100;
   }
 
@@ -24,21 +27,21 @@
     })[0];
   }
 
-  function checkOutOfScreen(ball) {
+  function checkOutOfScreen (ball)
+  {
     var x = localToWorldCoords(ball.pos.x);
+
     return x + (ball.size * 2 / SCALE - 10) > window.innerWidth || x < 0;
   }
 
-  function checkBounds(ball) {
-    if(localToWorldCoords(ball.pos.y) < 0) {
-      return true;
-    }
-    if(localToWorldCoords(ball.pos.y) + (ball.size) > window.innerHeight) {
-      return true;
-    }
+  function checkBounds (ball)
+  {
+    return localToWorldCoords(ball.pos.y) < 0 ||
+            localToWorldCoords(ball.pos.y) + ball.size > window.innerHeight;
   }
 
-  function AABBcollide(ball, hand, handCenterOffset) {
+  function aAbBcollide (ball, hand, handCenterOffset)
+  {
     var ballSize = ball.size / (2 * SCALE),
         ballCenterX = localToWorldCoords(ball.pos.x) + ballSize,
         ballCenterY = localToWorldCoords(ball.pos.y) + ballSize,
@@ -49,27 +52,30 @@
         handCenterX = (handCenterOffset) + handWidth,
         handCenterY = localToWorldCoords(hand.h) + handHeight;
 
-    if (Math.abs(ballCenterX - handCenterX) > (ballSize + handWidth)) { return false; }
-    if (Math.abs(ballCenterY - handCenterY) > (ballSize + handHeight)) { return false; }
+    if (Math.abs(ballCenterX - handCenterX) > ballSize + handWidth ||
+        Math.abs(ballCenterY - handCenterY) > ballSize + handHeight)
+      return false;
+
     return true;
   }
 
-  function checkHandCollision(ball, left, right) {
-
-    if (!left || !right) {
+  function checkHandCollision (ball, left, right)
+  {
+    if (!left || !right)
       return false;
-    }
 
     if (ball.heading.x > 0)
     {
       var rightWidth = right.width / (2 * SCALE);
-      return AABBcollide(ball, right, window.innerWidth - rightWidth * 6);
-    } else {
-      return AABBcollide(ball, left, 0);
+
+      return aAbBcollide(ball, right, window.innerWidth - rightWidth * 6);
     }
+    else
+      return aAbBcollide(ball, left, 0);
   }
 
-  function Hand(h, elem) {
+  function Hand (h, elem)
+  {
     this.h = h;
     this.elem = elem;
     this.width = 20;
@@ -77,58 +83,80 @@
   }
 
   Hand.prototype = {
-    setPosition: function(h) {
+    setPosition: function (h)
+    {
       this.h = h;
     },
 
-    update: function() {
+    update: function ()
+    {
       this.elem.css({
-        top: localToWorldCoords(this.h) + "px"
+        top: localToWorldCoords(this.h) + 'px'
       });
     }
   };
 
-  function Ball(pos, elem, heading, speed) {
+  function Ball(pos, elem, heading, speed)
+  {
     this.pos = pos;
     this.elem = elem;
     this.heading = heading;
     this.speed = speed;
     this.size = 50;
-  };
+  }
 
   Ball.prototype = {
-    setPosition: function(x, y) {
+    setPosition: function (x, y)
+    {
       this.pos = { x: x, y: y };
     },
 
-    setHeading: function(x, y) {
-      this.heading = { x: x, y: y };
+    setHeading: function (x, y)
+    {
+      this.heading = {
+        x: x,
+        y: y
+      };
     },
 
-    setSpeed: function(s) {
+    setSpeed: function (s)
+    {
       this.speed = s;
     },
 
-    randomizeHeading: function() {
+    randomizeHeading: function ()
+    {
       var yShift = Math.random() * 2 - 1,
-          newHeading = { x: this.heading.x, y: this.heading.y + yShift },
+
+          newHeading = {
+            x: this.heading.x,
+            y: this.heading.y + yShift
+          },
+
           unitHeading = unitVector(newHeading);
 
       this.setHeading(unitHeading.x, unitHeading.y);
     },
 
-    collide: function() {
-      var newHeading = { x: -this.heading.x, y: -this.heading.y };
+    collide: function ()
+    {
+      var newHeading = {
+            x: -this.heading.x,
+            y: -this.heading.y
+          };
+
       this.setHeading(newHeading.x, newHeading.y);
       this.randomizeHeading();
       this.setSpeed(this.speed + 1);
     },
 
-    wallCollide: function() {
+    wallCollide: function ()
+    {
       this.setHeading(this.heading.x, -this.heading.y);
     },
 
-    update: function() {
+    update: function ()
+    {
       var newX = this.pos.x + this.heading.x * this.speed,
           newY = this.pos.y + this.heading.y * this.speed;
 
@@ -139,12 +167,15 @@
         top: localToWorldCoords(this.pos.y) + 'px'
       });
     }
-  }
+  };
 
-  var leftHand = new Hand(0, $left),
-      rightHand = new Hand(0, $right),
-      ball = new Ball({x: 600, y: 70}, $ball, {x: 1, y: 0}, 3),
-      leapLeftHand, leapRightHand,
+  var leftHand = new Hand(0, $('#left')),
+      rightHand = new Hand(0, $('#right')),
+
+      ball = new Ball({x: 600, y: 70}, $('#ball'), {x: 1, y: 0}, 3),
+
+      leapLeftHand = null,
+      leapRightHand = null,
 
       gameStart = false;
 
@@ -161,18 +192,22 @@
       leapLeftHand = getHandByType(frame.hands, 'right');
       leapRightHand = getHandByType(frame.hands, 'left');
 
-      leapLeftHand && leftHand.setPosition(leapLeftHand.screenPosition()[1]);
-      leapRightHand && rightHand.setPosition(leapRightHand.screenPosition()[1]);
+      if (leapLeftHand)
+        leftHand.setPosition(leapLeftHand.screenPosition()[1]);
+
+      if (leapRightHand)
+        rightHand.setPosition(leapRightHand.screenPosition()[1]);
     }
 
     if (checkHandCollision(ball, leftHand, rightHand)) {
       ball.collide();
-    };
-    if (checkBounds(ball)) {
-      ball.wallCollide();
     }
-    if (checkOutOfScreen(ball)) {
-    } else {
+
+    if (checkBounds(ball))
+      ball.wallCollide();
+
+    if (!checkOutOfScreen(ball))
+    {
       leftHand.update();
       rightHand.update();
 
@@ -182,4 +217,4 @@
 
   }).use('screenPosition', {scale: 0.25});
 
-}(document, undefined));
+}(document, jQuery));
