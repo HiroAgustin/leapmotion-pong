@@ -1,4 +1,4 @@
-;(function (doc, $)
+;(function (win, doc, $)
 {
   'use strict';
 
@@ -9,8 +9,8 @@
     var mag = Math.sqrt( v.x * v.x + v.y * v.y );
 
     return {
-      x: v.x / mag,
-      y: v.y / mag
+      x: v.x / mag
+    , y: v.y / mag
     };
   }
 
@@ -31,32 +31,27 @@
   {
     var x = localToWorldCoords(ball.pos.x);
 
-    return x + (ball.size * 2 / SCALE - 10) > window.innerWidth || x < 0;
+    return x + (ball.size * 2 / SCALE - 10) > win.innerWidth || x < 0;
   }
 
   function checkBounds (ball)
   {
-    return localToWorldCoords(ball.pos.y) < 0 ||
-            localToWorldCoords(ball.pos.y) + ball.size > window.innerHeight;
+    return localToWorldCoords(ball.pos.y) < 0 || localToWorldCoords(ball.pos.y) + ball.size > win.innerHeight;
   }
 
   function aAbBcollide (ball, hand, handCenterOffset)
   {
-    var ballSize = ball.size / (2 * SCALE),
-        ballCenterX = localToWorldCoords(ball.pos.x) + ballSize,
-        ballCenterY = localToWorldCoords(ball.pos.y) + ballSize,
+    var ballSize = ball.size / (2 * SCALE)
+      , ballCenterX = localToWorldCoords(ball.pos.x) + ballSize
+      , ballCenterY = localToWorldCoords(ball.pos.y) + ballSize
 
-        handWidth = hand.width / (2 * SCALE),
-        handHeight = hand.height / (2 * SCALE),
+      , handWidth = hand.width / (2 * SCALE)
+      , handHeight = hand.height / (2 * SCALE)
 
-        handCenterX = (handCenterOffset) + handWidth,
-        handCenterY = localToWorldCoords(hand.h) + handHeight;
+      , handCenterX = handCenterOffset + handWidth
+      , handCenterY = localToWorldCoords(hand.h) + handHeight;
 
-    if (Math.abs(ballCenterX - handCenterX) > ballSize + handWidth ||
-        Math.abs(ballCenterY - handCenterY) > ballSize + handHeight)
-      return false;
-
-    return true;
+    return !(Math.abs(ballCenterX - handCenterX) > ballSize + handWidth || Math.abs(ballCenterY - handCenterY) > ballSize + handHeight);
   }
 
   function checkHandCollision (ball, left, right)
@@ -65,11 +60,8 @@
       return false;
 
     if (ball.heading.x > 0)
-    {
-      var rightWidth = right.width / (2 * SCALE);
+      return aAbBcollide(ball, right, win.innerWidth - (right.width / (2 * SCALE)) * 6);
 
-      return aAbBcollide(ball, right, window.innerWidth - rightWidth * 6);
-    }
     else
       return aAbBcollide(ball, left, 0);
   }
@@ -83,12 +75,13 @@
   }
 
   Hand.prototype = {
+
     setPosition: function (h)
     {
       this.h = h;
-    },
+    }
 
-    update: function ()
+  , update: function ()
     {
       this.elem.css({
         top: localToWorldCoords(this.h) + 'px'
@@ -106,80 +99,92 @@
   }
 
   Ball.prototype = {
+
     setPosition: function (x, y)
     {
-      this.pos = { x: x, y: y };
-    },
+      this.pos = {
+        x: x
+      , y: y
+      };
 
-    setHeading: function (x, y)
+      return this;
+    }
+
+  , setHeading: function (x, y)
     {
       this.heading = {
-        x: x,
-        y: y
+        x: x
+      , y: y
       };
-    },
 
-    setSpeed: function (s)
+      return this;
+    }
+
+  , setSpeed: function (s)
     {
       this.speed = s;
-    },
 
-    randomizeHeading: function ()
+      return this;
+    }
+
+  , randomizeHeading: function ()
     {
-      var yShift = Math.random() * 2 - 1,
+      var yShift = Math.random() * 2 - 1
 
-          newHeading = {
+        , newHeading = {
             x: this.heading.x,
             y: this.heading.y + yShift
-          },
+          }
 
-          unitHeading = unitVector(newHeading);
+        , unitHeading = unitVector(newHeading);
 
-      this.setHeading(unitHeading.x, unitHeading.y);
-    },
+      return this.setHeading(unitHeading.x, unitHeading.y);
+    }
 
-    collide: function ()
+  , collide: function ()
     {
       var newHeading = {
-            x: -this.heading.x,
-            y: -this.heading.y
+            x: -this.heading.x
+          , y: -this.heading.y
           };
 
-      this.setHeading(newHeading.x, newHeading.y);
-      this.randomizeHeading();
-      this.setSpeed(this.speed + 1);
-    },
+      return this
+        .setHeading(newHeading.x, newHeading.y)
+        .randomizeHeading()
+        .setSpeed(this.speed + 1);
+    }
 
-    wallCollide: function ()
+  , wallCollide: function ()
     {
-      this.setHeading(this.heading.x, -this.heading.y);
-    },
+      return this.setHeading(this.heading.x, -this.heading.y);
+    }
 
-    update: function ()
+  , update: function ()
     {
-      var newX = this.pos.x + this.heading.x * this.speed,
-          newY = this.pos.y + this.heading.y * this.speed;
+      var pos = this.pos
+        , newX = pos.x + this.heading.x * this.speed
+        , newY = pos.y + this.heading.y * this.speed;
 
       this.setPosition(newX, newY);
 
       this.elem.css({
-        left: localToWorldCoords(this.pos.x) + 'px',
-        top: localToWorldCoords(this.pos.y) + 'px'
+        left: localToWorldCoords(pos.x) + 'px'
+      , top: localToWorldCoords(pos.y) + 'px'
       });
     }
   };
 
-  var leftHand = new Hand(0, $('#left')),
-      rightHand = new Hand(0, $('#right')),
+  var leftHand = new Hand(0, $(doc.getElementById('left')))
+    , rightHand = new Hand(0, $(doc.getElementById('right')))
 
-      ball = new Ball({x: 600, y: 70}, $('#ball'), {x: 1, y: 0}, 3),
+    , ball = new Ball({x: 600, y: 70}, $(doc.getElementById('ball')), {x: 1, y: 0}, 3)
 
-      leapLeftHand = null,
-      leapRightHand = null,
+    , leapLeftHand = null
+    , leapRightHand = null
 
-      gameStart = false;
+    , gameStart = false;
 
-  $(window).on('keydown', function ()
+  $(win).on('keydown', function ()
   {
     ball.elem.show();
     gameStart = true;
@@ -199,9 +204,8 @@
         rightHand.setPosition(leapRightHand.screenPosition()[1]);
     }
 
-    if (checkHandCollision(ball, leftHand, rightHand)) {
+    if (checkHandCollision(ball, leftHand, rightHand))
       ball.collide();
-    }
 
     if (checkBounds(ball))
       ball.wallCollide();
@@ -217,4 +221,4 @@
 
   }).use('screenPosition', {scale: 0.25});
 
-}(document, jQuery));
+}(window, document, jQuery));
